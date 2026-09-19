@@ -46,10 +46,6 @@ public class SimpleVIP : BasePlugin
             "Reload VIP configuration",
             ReloadVipCommand
         );
-
-        Logger.LogInformation(
-            "SimpleVIP 1.0.0 loaded successfully."
-        );
     }
 
     private void LoadConfig()
@@ -77,13 +73,8 @@ public class SimpleVIP : BasePlugin
                     File.ReadAllText(ConfigPath)
                 ) ?? new SimpleVipConfig();
         }
-        catch (Exception ex)
+        catch
         {
-            Logger.LogError(
-                ex,
-                "Failed to load SimpleVIP configuration."
-            );
-
             Config = new SimpleVipConfig();
         }
     }
@@ -171,7 +162,7 @@ public class SimpleVIP : BasePlugin
         );
 
         player.PrintToChat(
-            $" \x04[VIP] \x01Бонус раунда: +{Config.BonusHealth} HP / {Config.BonusArmor} armor"
+            $" \x04[VIP] \x01Бонус: +{Config.BonusHealth} HP / {Config.BonusArmor} armor"
         );
     }
 
