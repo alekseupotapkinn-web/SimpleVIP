@@ -19,7 +19,7 @@ public sealed class SimpleVipConfig
 public class SimpleVIP : BasePlugin
 {
     public override string ModuleName => "SimpleVIP";
-    public override string ModuleVersion => "1.0.0";
+    public override string ModuleVersion => "1.0.1";
     public override string ModuleAuthor => "Lil Gun";
     public override string ModuleDescription =>
         "Simple VIP plugin for CounterStrikeSharp 1.0.374";
@@ -35,11 +35,9 @@ public class SimpleVIP : BasePlugin
 
         RegisterEventHandler<EventRoundStart>(OnRoundStart);
 
-        AddCommand(
-            "css_vip",
-            "VIP information",
-            VipCommand
-        );
+        AddCommand("css_vip", "VIP information", VipCommand);
+
+        AddCommand("css_vipid", "Show your SteamID", VipIdCommand);
 
         AddCommand(
             "css_reloadvip",
@@ -81,15 +79,10 @@ public class SimpleVIP : BasePlugin
 
     private bool IsVip(CCSPlayerController? player)
     {
-        if (
-            player == null ||
-            !player.IsValid ||
-            player.AuthorizedSteamID == null
-        )
+        if (player == null || !player.IsValid)
             return false;
 
-        string steamId =
-            player.AuthorizedSteamID.SteamId64.ToString();
+        var steamId = player.SteamID.ToString();
 
         return Config.SteamIds.Contains(
             steamId,
@@ -163,6 +156,19 @@ public class SimpleVIP : BasePlugin
 
         player.PrintToChat(
             $" \x04[VIP] \x01Бонус: +{Config.BonusHealth} HP / {Config.BonusArmor} armor"
+        );
+    }
+
+    private void VipIdCommand(
+        CCSPlayerController? player,
+        CommandInfo command
+    )
+    {
+        if (player == null)
+            return;
+
+        player.PrintToChat(
+            $" \x04[VIP] \x01Ваш SteamID64: {player.SteamID}"
         );
     }
 
