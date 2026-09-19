@@ -1,6 +1,7 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Utils;
 using System.Text.Json;
 
 namespace SimpleVIP;
@@ -19,7 +20,7 @@ public sealed class SimpleVipConfig
 public class SimpleVIP : BasePlugin
 {
     public override string ModuleName => "SimpleVIP";
-    public override string ModuleVersion => "1.0.1";
+    public override string ModuleVersion => "1.0.2";
     public override string ModuleAuthor => "Lil Gun";
     public override string ModuleDescription =>
         "Simple VIP plugin for CounterStrikeSharp 1.0.374";
@@ -33,11 +34,21 @@ public class SimpleVIP : BasePlugin
     {
         LoadConfig();
 
-        RegisterEventHandler<EventRoundStart>(OnRoundStart);
+        RegisterEventHandler<EventPlayerSpawn>(
+            OnPlayerSpawn
+        );
 
-        AddCommand("css_vip", "VIP information", VipCommand);
+        AddCommand(
+            "css_vip",
+            "VIP information",
+            VipCommand
+        );
 
-        AddCommand("css_vipid", "Show your SteamID", VipIdCommand);
+        AddCommand(
+            "css_vipid",
+            "Show your SteamID",
+            VipIdCommand
+        );
 
         AddCommand(
             "css_reloadvip",
@@ -82,7 +93,8 @@ public class SimpleVIP : BasePlugin
         if (player == null || !player.IsValid)
             return false;
 
-        var steamId = player.SteamID.ToString();
+        string steamId =
+            player.SteamID.ToString();
 
         return Config.SteamIds.Contains(
             steamId,
@@ -90,43 +102,43 @@ public class SimpleVIP : BasePlugin
         );
     }
 
-    private HookResult OnRoundStart(
-        EventRoundStart @event,
+    private HookResult OnPlayerSpawn(
+        EventPlayerSpawn @event,
         GameEventInfo info
     )
     {
+        var player = @event.Userid;
+
+        if (player == null || !player.IsValid)
+            return HookResult.Continue;
+
+        if (!IsVip(player))
+            return HookResult.Continue;
+
         Server.NextFrame(() =>
         {
-            foreach (var player in Utilities.GetPlayers())
+            if (
+                !player.IsValid ||
+                player.PlayerPawn?.Value == null
+            )
+                return;
+
+            var pawn = player.PlayerPawn.Value;
+
+            // VIP HP
+            pawn.Health = Math.Min(
+                150,
+                100 + Config.BonusHealth
+            );
+
+            // VIP armor
+            pawn.ArmorValue = Config.BonusArmor;
+
+            if (Config.ShowVipTag)
             {
-                if (
-                    player == null ||
-                    !player.IsValid ||
-                    player.PlayerPawn?.Value == null
-                )
-                    continue;
-
-                if (!IsVip(player))
-                    continue;
-
-                var pawn = player.PlayerPawn.Value;
-
-                pawn.Health = Math.Min(
-                    150,
-                    pawn.Health + Config.BonusHealth
+                player.PrintToChat(
+                    $" \x04[VIP] \x01Бонус: {pawn.Health} HP / {Config.BonusArmor} armor"
                 );
-
-                pawn.ArmorValue = Math.Max(
-                    pawn.ArmorValue,
-                    Config.BonusArmor
-                );
-
-                if (Config.ShowVipTag)
-                {
-                    player.PrintToChat(
-                        $" \x04[VIP] \x01VIP бонус: +{Config.BonusHealth} HP / {Config.BonusArmor} armor"
-                    );
-                }
             }
         });
 
@@ -155,7 +167,7 @@ public class SimpleVIP : BasePlugin
         );
 
         player.PrintToChat(
-            $" \x04[VIP] \x01Бонус: +{Config.BonusHealth} HP / {Config.BonusArmor} armor"
+            $" \x04[VIP] \x01Бонус при спавне: +{Config.BonusHealth} HP / {Config.BonusArmor} armor"
         );
     }
 
